@@ -24,23 +24,19 @@
  ********************************************************/
 team_t team = {
     /* Team name */
-    "ateam",
+    "Team_7",
     /* First member's full name */
-    "Harry Bovik",
+    "LEE_KANG_WOOK",
     /* First member's email address */
-    "bovik@cs.cmu.edu",
-    /* Second member's full name (leave blank if none) */
-    "",
-    /* Second member's email address (leave blank if none) */
-    ""
+    "dlrkddnr0421@daum.net"
 };
 
 /* single word (4) or double word (8) alignment */
 #define ALIGNMENT 8
 
 /* rounds up to the nearest multiple of ALIGNMENT */
-#define ALIGN(size) (((size) + (ALIGNMENT-1)) & ~0x7)
-
+#define ALIGN(size) (((size) + (ALIGNMENT-1)) & ~0x7)       // 7을 더해주고 하위 3개의 비트는 0으로 바꿔줌.
+                                                            // 그러면 나보다 높으면서 가장 가까운 8의 배수가 될 수 있다.
 
 #define SIZE_T_SIZE (ALIGN(sizeof(size_t)))
 
