@@ -14,6 +14,13 @@
 #include "memlib.h"
 #include "config.h"
 
+/*
+ * memlib이 관리하는 mem은 메모리 시스템에 대한 시뮬레이션.
+ * mm.c 에서 사용하는 힙에 대한 최대 크기를 malloc으로 할당받아 두고,
+ * mm.c 에서 mem_sbrk 를 호출했을 때 mem_brk 의 위치를 조절해서 힙의 크기를 조정해 준다.
+ * mm.c 에서 사용하는 힙의 범위는 mem_start_brk ~ mem_brk 이다.
+*/
+
 /* private variables */
 static char *mem_start_brk;  /* points to first byte of heap */
 static char *mem_brk;        /* points to last byte of heap */
