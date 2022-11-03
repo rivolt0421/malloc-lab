@@ -23,11 +23,15 @@
  ********************************************************/
 team_t team = {
     /* Team name */
-    "Team_7",
+    "JUNGLE_W06_TEAM_7",
     /* First member's full name */
     "LEE_KANG_WOOK",
     /* First member's email address */
-    "dlrkddnr0421@daum.net"
+    "dlrkddnr0421@daum.net",
+    /* Second member’s full name (leave blank if none) */
+    "",
+    /* Second member’s email address (leave blank if none) */
+    ""
 };
 
 /* Basic constants and macros*/
@@ -79,35 +83,6 @@ static void *find_fit(size_t asize);
 static void place(void *bp, size_t asize);
 static void *coalesce(void *bp);
 
-/*
- * mm_checkheap - check heap invariants for this implementation.
-*/
-void mm_checkheap(int lineno)
-{
-    char *heap_lo = mem_heap_lo();                      // pointing first word of the heap
-    char *heap_hi = heap_lo + (mem_heapsize()-WSIZE);   // pointing last word of the heap
-    char *bp;
-
-    /* heap level check*/
-    assert(GET(heap_lo) == 0);                          // check unused block
-    assert(GET(heap_lo + 1*WSIZE) == PACK(DSIZE,1));    // check prologue block
-    assert(GET(heap_lo + 2*WSIZE) == PACK(DSIZE,1));
-    assert(GET(heap_hi) == PACK(0,1));                  // check epilogue block
-
-    /* block level, list level check */
-    for(bp = heap_listp ; GET_SIZE(HDRP(bp)) > 0 ; bp = NEXT_BLKP(bp)) {
-        // block level
-        char * ftr = FTRP(bp);
-        assert(GET(HDRP(bp)) == GET(FTRP(bp)));     // check header and footer match
-        assert(!(UINT_CAST(bp) & 0x7));             // check if payload area aligned
-
-        // list level
-        assert(GET_ALLOC(HDRP(bp)) | GET_ALLOC(HDRP(NEXT_BLKP(bp))));   // check contiguous free blocks
-                                                                        // alloc 여부가 (1,0), (0,1), (1,1) 이면 연속된 free블록이 없는 것이지만,
-                                                                        // (0,0) 이면 연속된 free블록이 존재한다는 뜻.
-    }
-}
-
 /* 
  * mm_init - initialize the malloc package.
  */
@@ -127,16 +102,10 @@ int mm_init(void)
      *                                     |
      *                                 heap_listp           
      */
-        #ifdef DEBUG
-        CHECKHEAP(); 
-        #endif
+
     /* Extend the empty heap with a free block of CHUNKSIZE bytes */
     if (extend_heap(CHUNKSIZE/WSIZE) == NULL)   // 필요한 워드의 개수를 인자로 넘긴다.
         return -1;
-
-        #ifdef DEBUG
-        CHECKHEAP();
-        #endif
 
     return 0;
 }
@@ -187,18 +156,9 @@ void *mm_malloc(size_t size)
     else
         asize = ALIGN(size) + DSIZE;    // size는 사용자가 요구한 공간. 거기에 헤더와 푸터의 8바이트를 더해줘야 한다.
 
-    // if (size <= DSIZE)
-    //     asize = 2*DSIZE;
-    // else
-    //     asize = DSIZE * ((size + (DSIZE) + (DSIZE-1)) / DSIZE);
-
     /* Search the free list for a fit */
     if ((bp = find_fit(asize)) != NULL) {
         place(bp, asize);
-
-        #ifdef DEBUG
-        CHECKHEAP();
-        #endif
 
         return bp;
     }
@@ -207,15 +167,7 @@ void *mm_malloc(size_t size)
     if ((bp = extend_heap(extendsize/WSIZE)) == NULL)
         return NULL;
 
-        #ifdef DEBUG
-        CHECKHEAP();
-        #endif
-
     place(bp, asize);
-
-        #ifdef DEBUG
-        CHECKHEAP();
-        #endif
         
     return bp;
 }
@@ -239,7 +191,6 @@ static void *find_fit(size_t asize)
 */
 static void place(void *bp, size_t asize)
 {
-    size_t total = mem_heapsize();
     size_t original_size = GET_SIZE(HDRP(bp));  // 원래 블록의 사이즈
     size_t diff = original_size - asize;
     
@@ -269,9 +220,7 @@ void mm_free(void *bp)
     PUT(HDRP(bp), PACK(size, 0));       // size 그대로인 free 블록으로 지정.
     PUT(FTRP(bp), PACK(size, 0));       // size 그대로인 free 블록으로 지정.
     coalesce(bp);
-        #ifdef DEBUG
-        CHECKHEAP();
-        #endif
+
 }
 
 static void *coalesce(void *bp)
@@ -325,4 +274,37 @@ void *mm_realloc(void *ptr, size_t size)
     memcpy(newptr, oldptr, copySize);
     mm_free(oldptr);
     return newptr;
+}
+
+/*
+ * mm_checkheap - check heap invariants for this implementation.
+ *
+ * #ifdef DEBUG
+ *   CHECKHEAP();
+ * #endif
+*/
+void mm_checkheap(int lineno)
+{
+    char *heap_lo = mem_heap_lo();                      // pointing first word of the heap
+    char *heap_hi = heap_lo + (mem_heapsize()-WSIZE);   // pointing last word of the heap
+    char *bp;
+
+    /* heap level check*/
+    assert(GET(heap_lo) == 0);                          // check unused block
+    assert(GET(heap_lo + 1*WSIZE) == PACK(DSIZE,1));    // check prologue block
+    assert(GET(heap_lo + 2*WSIZE) == PACK(DSIZE,1));
+    assert(GET(heap_hi) == PACK(0,1));                  // check epilogue block
+
+    /* block level, list level check */
+    for(bp = heap_listp ; GET_SIZE(HDRP(bp)) > 0 ; bp = NEXT_BLKP(bp)) {
+        // block level
+        char * ftr = FTRP(bp);
+        assert(GET(HDRP(bp)) == GET(FTRP(bp)));     // check header and footer match
+        assert(!(UINT_CAST(bp) & 0x7));             // check if payload area aligned
+
+        // list level
+        assert(GET_ALLOC(HDRP(bp)) | GET_ALLOC(HDRP(NEXT_BLKP(bp))));   // check contiguous free blocks
+                                                                        // alloc 여부가 (1,0), (0,1), (1,1) 이면 연속된 free블록이 없는 것이지만,
+                                                                        // (0,0) 이면 연속된 free블록이 존재한다는 뜻.
+    }
 }
